@@ -4,43 +4,42 @@
 #include <iostream>
 #include <math.h>
 
-volatile int counter = 0;
-
-int isPrime(int n)
+unsigned int __stdcall numberPrintThread(void* num)
 {
-	for (int i = 2; i < (int)(sqrt((float)n) + 1.0); i++) {
-		if (n % i == 0) return 0;
-	}
-	return 1;
-}
+	int* curr = (int*)num;
+	int min = (*curr>1) ? pow(10,*curr) : 0;
 
-unsigned int __stdcall mythread(void*)
-{
-	char* s;
-	while (counter < 25) {
-		int number = counter++;
-		s = "No";
-		if (isPrime(number)) s = "Yes";
-		printf("Thread %d value = %d is prime = %s\n",
-			GetCurrentThreadId(), number, s);
-	}
+	printf("Start Thread - %d\n", *curr);
+
+	for (int i = min+1; i <= min+50; i++)
+		printf("%d\n", i);
+
+	printf("Finish Thread - %d\n", *curr);
+
 	return 0;
 }
 
-int main(int argc, char* argv[])
+int main()
 {
-	HANDLE myhandleA, myhandleB;
+	HANDLE hndl[4];
+	int number[4];
 
-	myhandleA = (HANDLE)_beginthreadex(0, 0, &mythread, (void*)0, 0, 0);
-	myhandleB = (HANDLE)_beginthreadex(0, 0, &mythread, (void*)0, 0, 0);
+	printf("Start Application\n");
 
-	WaitForSingleObject(myhandleA, INFINITE);
-	WaitForSingleObject(myhandleB, INFINITE);
+	for (int i = 0; i < 4; i++)
+	{
+		number[i] = i+1;
+		hndl[i] = (HANDLE)_beginthreadex(NULL, 0, &numberPrintThread, &number[i], 0, NULL);
+	}
+	
+	for (int i=0;i<4;i++)
+		WaitForSingleObject(hndl[i], INFINITE);
 
-	CloseHandle(myhandleA);
-	CloseHandle(myhandleB);
+	for (int i = 0; i < 4; i++)
+		CloseHandle(hndl[i]);
+
+	printf("Finish Application\n");
 
 	getchar();
-
 	return 0;
 }
